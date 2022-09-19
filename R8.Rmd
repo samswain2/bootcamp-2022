@@ -1,0 +1,38 @@
+---
+title: "R8"
+author: "Sam Swain"
+date: "2022-09-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data
+
+### Data Imports
+
+```{r data_imports}
+schools <- read.csv("data/nys_schools.csv", stringsAsFactors = FALSE)
+acs <- read.csv("data/nys_acs.csv", stringsAsFactors = FALSE)
+```
+
+### Data Cleaning
+
+```{r}
+library(dplyr)
+
+schools[schools == -99] <- NA
+
+ps <- quantile(acs$county_per_poverty, prob=c(.25,.5,.75))
+
+acs <- acs %>% 
+  mutate(poverty_class = case_when(county_per_poverty < ps[1] ~ 'high',
+                                   county_per_poverty <= ps[3] & county_per_poverty >= ps[1] ~ 'med',
+                                   county_per_poverty > ps[3] ~ 'low'))
+
+mgd_school <- merge(schools, acs, by = c("county_name", "year"))
+
+mgd_school <- mgd_school[complete.cases(mgd_school), ]
+```
